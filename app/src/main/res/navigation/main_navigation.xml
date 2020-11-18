@@ -9,5 +9,8 @@
         android:id="@+id/mainFragment"
         android:name="com.supercom.view.MainFragment"
         android:label="fragment_main"
-        tools:layout="@layout/fragment_main" />
+        tools:layout="@layout/fragment_main" >
+
+    </fragment>
+
 </navigation>

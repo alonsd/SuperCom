@@ -9,19 +9,76 @@
         android:layout_height="match_parent"
         tools:context=".view.MainFragment">
 
+
         <TextView
             android:id="@+id/fragment_main_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="16dp"
             android:text="@string/fragment_main_example_3_countries"
             android:textColor="@color/black"
             android:textSize="22sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/fragment_main_top_date_view_group"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@+id/fragment_main_title">
+
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_marginStart="14dp"
+                android:id="@+id/fragment_main_from_button"
+                android:layout_height="wrap_content"
+                android:text="@string/fragment_main_from" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_marginEnd="14dp"
+                android:id="@+id/fragment_main_from_date"
+                android:layout_height="wrap_content"
+                android:text="@string/fragment_main_yesterday" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/fragment_main_bottom_date_view_group"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@+id/fragment_main_top_date_view_group">
+
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_marginStart="14dp"
+                android:id="@+id/fragment_main_to_button"
+                android:layout_height="wrap_content"
+                android:text="@string/fragment_main_to" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_marginEnd="14dp"
+                android:id="@+id/fragment_main_to_date"
+                android:layout_height="wrap_content"
+                android:text="@string/fragment_main_today" />
+
+        </LinearLayout>
 
         <ProgressBar
             android:id="@+id/fragment_main_top_progress_bar"
@@ -31,7 +88,8 @@
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/fragment_main_title" />
+            app:layout_constraintTop_toBottomOf="@+id/fragment_main_bottom_date_view_group" />
+
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/fragment_main_recyclerview"

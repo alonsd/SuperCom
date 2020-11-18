@@ -2,5 +2,10 @@
     <string name="app_name">SuperCom</string>
     <string name="viewholder_country_new_cases">New cases."</string>
     <string name="fragment_main_example_3_countries">Example 3 Countries</string>
+    <string name="fragment_main_to">To</string>
+    <string name="fragment_main_from">From</string>
+    <string name="fragment_date_selection_confirm">Confirm</string>
+    <string name="fragment_main_yesterday">Yesterday</string>
+    <string name="fragment_main_today">Today</string>
 
 </resources>
