@@ -1,5 +1,6 @@
 package com.supercom.utils
 
+import android.view.View
 import android.widget.DatePicker
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -24,4 +25,12 @@ fun DatePicker.getDate(): Date {
     val calendar = Calendar.getInstance()
     calendar.set(year, month, dayOfMonth)
     return calendar.time
+}
+
+fun View.setAsVisible() {
+    visibility = View.VISIBLE
+}
+
+fun View.setAsGone() {
+    visibility = View.GONE
 }

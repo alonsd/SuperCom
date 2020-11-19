@@ -7,6 +7,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/white"
         tools:context=".view.MainFragment">
 
 
@@ -23,18 +24,18 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
+            android:id="@+id/fragment_main_top_date_view_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/fragment_main_top_date_view_group"
             android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@+id/fragment_main_title">
 
 
             <Button
-                android:layout_width="wrap_content"
-                android:layout_marginStart="14dp"
                 android:id="@+id/fragment_main_from_button"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
                 android:text="@string/fragment_main_from" />
 
             <Space
@@ -43,27 +44,28 @@
                 android:layout_weight="1" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_marginEnd="14dp"
                 android:id="@+id/fragment_main_from_date"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/fragment_main_yesterday" />
+                android:layout_marginEnd="14dp"
+                android:text="@string/fragment_main_yesterday"
+                android:textColor="@color/black" />
 
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/fragment_main_bottom_date_view_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/fragment_main_bottom_date_view_group"
             android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@+id/fragment_main_top_date_view_group">
 
 
             <Button
-                android:layout_width="wrap_content"
-                android:layout_marginStart="14dp"
                 android:id="@+id/fragment_main_to_button"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
                 android:text="@string/fragment_main_to" />
 
             <Space
@@ -72,11 +74,12 @@
                 android:layout_weight="1" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_marginEnd="14dp"
                 android:id="@+id/fragment_main_to_date"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/fragment_main_today" />
+                android:layout_marginEnd="14dp"
+                android:text="@string/fragment_main_today"
+                android:textColor="@color/black" />
 
         </LinearLayout>
 
@@ -95,7 +98,54 @@
             android:id="@+id/fragment_main_recyclerview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@+id/fragment_main_top_progress_bar" />
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@+id/fragment_main_top_progress_bar"
+            tools:itemCount="3"
+            tools:listitem="@layout/viewholder_country"
+            tools:visibility="visible" />
+
+
+        <ProgressBar
+            android:id="@+id/fragment_main_country_fetch_progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/fragment_main_recyclerview" />
+
+        <LinearLayout
+            android:id="@+id/fragment_main_self_country_view_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@+id/fragment_main_country_fetch_progress_bar"
+            tools:visibility="visible">
+
+
+            <Button
+                android:id="@+id/fragment_main_fetch_country_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:text="@string/fragment_main_fetch_country" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/fragment_main_fetched_country_data"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="14dp"
+                android:textColor="@color/black"
+                tools:text="Country - IL, Cases - 2000" />
+
+        </LinearLayout>
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

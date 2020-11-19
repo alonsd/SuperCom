@@ -1,11 +1,21 @@
 <resources>
+    <!--    General-->
     <string name="app_name">SuperCom</string>
+    <string name="comma">,</string>
+
+    <!--    ViewHolder Country New Cases-->
     <string name="viewholder_country_new_cases">New cases."</string>
+
+    <!--    Fragment Main-->
     <string name="fragment_main_example_3_countries">Example 3 Countries</string>
     <string name="fragment_main_to">To</string>
     <string name="fragment_main_from">From</string>
     <string name="fragment_date_selection_confirm">Confirm</string>
     <string name="fragment_main_yesterday">Yesterday</string>
     <string name="fragment_main_today">Today</string>
+    <string name="fragment_main_fetch_country">Fetch Country</string>
+    <string name="main_fragment_country">\"Country - \"</string>
+    <string name="main_fragment_cases">Cases -</string>
+
 
 </resources>

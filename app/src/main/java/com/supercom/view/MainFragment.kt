@@ -1,9 +1,19 @@
 package com.supercom.view
 
+import android.Manifest.permission.*
 import android.app.DatePickerDialog
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.LocationManager
 import android.os.Bundle
 import android.text.format.DateUtils
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,24 +28,26 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.supercom.R
 import com.supercom.databinding.FragmentMainBinding
 import com.supercom.model.CountryCasesModel
+import com.supercom.utils.Constants.RequestCodes.LOCATION_REQUEST_CODE
 import com.supercom.utils.getAnyDateAsISODate
-import com.supercom.utils.getDate
 import com.supercom.utils.getCurrentISODateAsString
+import com.supercom.utils.getDate
 import com.supercom.utils.getYesterdayISODateAsString
 import com.supercom.utils.network.Resource
+import com.supercom.utils.view.GeneralViewUtils
 import com.supercom.view.adapter.CountryAdapter
 import com.supercom.view.viewmodel.MainViewModel
 import org.koin.android.ext.android.get
 import java.util.*
-import java.util.jar.Manifest
+
 
 class MainFragment : Fragment(), View.OnClickListener {
 
     private lateinit var binding: FragmentMainBinding
     private lateinit var adapter: CountryAdapter
     private lateinit var navController: NavController
+    private var selfCountryData = ""
     private var selectedFromDateAsLong: Long = Date().time - DateUtils.DAY_IN_MILLIS
-    private var selectedToDateAsLong: Long = Date().time
     private var selectedFromDateAsString = ""
     private var selectedToDateAsString = ""
     private val mainViewModel = get<MainViewModel>()
@@ -56,34 +68,90 @@ class MainFragment : Fragment(), View.OnClickListener {
         requestAppPermissions()
         initListeners()
         initRecycler()
-        init(getYesterdayISODateAsString(), getCurrentISODateAsString())
+        initBluetooth()
     }
+
+    private fun initBluetooth() {
+        val filter = IntentFilter()
+        filter.addAction(BluetoothDevice.ACTION_FOUND)
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        requireActivity().registerReceiver(object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent!!.action == BluetoothDevice.ACTION_FOUND) {
+                    val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) as BluetoothDevice?
+                    Log.d("devicesFound", device.toString())
+                }
+            }
+        }, filter)
+        val adapter = BluetoothAdapter.getDefaultAdapter()
+        adapter.startDiscovery()
+    }
+
+
 
     private fun requestAppPermissions() {
 
-        requestPermissions(arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION,
-            android.Manifest.permission.BLUETOOTH), 10)
         when (PackageManager.PERMISSION_GRANTED) {
-            ContextCompat.checkSelfPermission(requireContext(),
-                android.Manifest.permission.ACCESS_COARSE_LOCATION,) -> {
-                // You can use the API that requires the permission.
+            ContextCompat.checkSelfPermission(requireContext(), ACCESS_COARSE_LOCATION),
+            ContextCompat.checkSelfPermission(requireContext(), BLUETOOTH_ADMIN),
+            ContextCompat.checkSelfPermission(requireContext(), BLUETOOTH)
+            -> {
+                getCountry()
             }
             else -> {
-                // You can directly ask for the permission.
-
+                requestPermissions(arrayOf(ACCESS_FINE_LOCATION, BLUETOOTH_ADMIN, BLUETOOTH), 10)
             }
         }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (requestCode == LOCATION_REQUEST_CODE)
+            getCountry()
+    }
+
+    private fun getCountry() {
+
+
+        val locationManager: LocationManager
+        try {
+            locationManager = requireActivity().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500L, 5f) { location ->
+                GeneralViewUtils.showFirstHideRest(binding.fragmentMainSelfCountryViewGroup, binding.fragmentMainCountryFetchProgressBar)
+                val geoCoder = Geocoder(requireContext(), Locale.getDefault())
+                val addresses = geoCoder.getFromLocation(location.latitude, location.longitude, 1)
+                fetchCountry(addresses[0].countryCode, getYesterdayISODateAsString(), getCurrentISODateAsString()) { resource ->
+                    handleSelfCountryDataFetch(resource)
+                }
+            }
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun handleSelfCountryDataFetch(resource: Resource<*>) {
+        val countryCasesModel = resource.data as CountryCasesModel
+        selfCountryData = getString(R.string.main_fragment_country)
+            .plus(countryCasesModel.country)
+            .plus(getString(R.string.comma))
+            .plus(" ")
+            .plus(getString(R.string.main_fragment_cases))
+            .plus(" ")
+            .plus(countryCasesModel.cases.toString())
     }
 
     private fun initListeners() {
         binding.fragmentMainFromButton.setOnClickListener(this)
         binding.fragmentMainToButton.setOnClickListener(this)
+        binding.fragmentMainFetchCountryButton.setOnClickListener(this)
     }
 
-    private fun init(fromDate: String, toDate: String) {
+    private fun fetchMainRecycler(fromDate: String, toDate: String) {
 
         exampleCountries.forEach { country ->
-            fetchCountries(country, fromDate, toDate)
+            fetchCountry(country, fromDate, toDate) { resource ->
+                handleSuccessfulExampleCountriesFetch(resource)
+            }
         }
     }
 
@@ -91,16 +159,16 @@ class MainFragment : Fragment(), View.OnClickListener {
         adapter = CountryAdapter(requireContext())
         binding.fragmentMainRecyclerview.setHasFixedSize(true)
         binding.fragmentMainRecyclerview.layoutManager = LinearLayoutManager(requireContext())
+        fetchMainRecycler(getYesterdayISODateAsString(), getCurrentISODateAsString())
     }
 
-    private fun fetchCountries(countryName: String, fromDate: String, toDate: String) {
+    private fun fetchCountry(countryName: String, fromDate: String, toDate: String, success: (resource: Resource<*>) -> Unit) {
         mainViewModel.getCovidDeathsByCountryAndDate(countryName, fromDate, toDate).observe(viewLifecycleOwner, { resource ->
             when (resource) {
                 is Resource.Loading -> {
-                    binding.fragmentMainTopProgressBar.visibility = View.VISIBLE
                 }
                 is Resource.Success -> {
-                    handleSuccessfulFetch(resource)
+                    success(resource)
                 }
                 is Resource.Exception -> {
                     Toast.makeText(requireContext(), resource.throwable.message, Toast.LENGTH_SHORT).show()
@@ -110,10 +178,10 @@ class MainFragment : Fragment(), View.OnClickListener {
     }
 
 
-    private fun handleSuccessfulFetch(resource: Resource<*>) {
+    private fun handleSuccessfulExampleCountriesFetch(resource: Resource<*>) {
         exampleCountriesList.add(resource.data as CountryCasesModel)
         if (exampleCountriesList.size != exampleCountries.size) return
-        binding.fragmentMainTopProgressBar.visibility = View.GONE
+        GeneralViewUtils.hideFirstShowRest(binding.fragmentMainTopProgressBar, binding.fragmentMainRecyclerview)
         binding.fragmentMainRecyclerview.adapter = adapter
         adapter.submitList(exampleCountriesList)
     }
@@ -131,13 +199,16 @@ class MainFragment : Fragment(), View.OnClickListener {
             R.id.fragment_main_to_button -> {
                 setSelectedDate(binding.fragmentMainToDate, false, currentYear, month, day)
             }
+            R.id.fragment_main_fetch_country_button -> {
+                binding.fragmentMainFetchedCountryData.text = selfCountryData
+            }
         }
     }
 
     private fun setSelectedDate(textView: TextView, isFromDate: Boolean, currentYear: Int, month: Int, day: Int) {
         exampleCountriesList.clear()
         val datePickerDialog = DatePickerDialog(requireContext(), { picker, year, monthOfYear, dayOfMonth ->
-            if (isFromDate){
+            if (isFromDate) {
                 selectedFromDateAsLong = picker.getDate().time
                 selectedFromDateAsString = getAnyDateAsISODate(year, monthOfYear, dayOfMonth)
             } else {
@@ -150,7 +221,7 @@ class MainFragment : Fragment(), View.OnClickListener {
                 .plus(".")
                 .plus(year.toString())
 
-            init(selectedFromDateAsString, selectedToDateAsString)
+            fetchMainRecycler(selectedFromDateAsString, selectedToDateAsString)
         }, currentYear, month, day)
         if (isFromDate) {
             datePickerDialog.datePicker.maxDate = Date().time - DateUtils.DAY_IN_MILLIS
