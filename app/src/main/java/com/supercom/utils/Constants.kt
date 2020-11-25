@@ -1,5 +1,7 @@
 package com.supercom.utils
 
+import android.text.format.DateUtils
+
 object Constants {
 
     object Api {
@@ -9,5 +11,10 @@ object Constants {
     object RequestCodes {
 
         const val LOCATION_REQUEST_CODE = 10
+    }
+
+    object Date {
+
+        const val YEAR_IN_MILLIS = DateUtils.WEEK_IN_MILLIS * 7
     }
 }

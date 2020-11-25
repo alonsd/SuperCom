@@ -16,6 +16,7 @@
     <string name="fragment_main_fetch_country">Fetch Country</string>
     <string name="main_fragment_country">\"Country - \"</string>
     <string name="main_fragment_cases">Cases -</string>
+    <string name="dot">.</string>
 
 
 </resources>

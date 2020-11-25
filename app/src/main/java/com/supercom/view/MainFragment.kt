@@ -17,6 +17,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.DatePicker
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -56,7 +57,7 @@ class MainFragment : Fragment(), View.OnClickListener {
     private val calendar = Calendar.getInstance()
 
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater : LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false)
         return binding.root
     }
@@ -89,34 +90,38 @@ class MainFragment : Fragment(), View.OnClickListener {
     }
 
 
-
     private fun requestAppPermissions() {
 
         when (PackageManager.PERMISSION_GRANTED) {
-            ContextCompat.checkSelfPermission(requireContext(), ACCESS_COARSE_LOCATION),
-            ContextCompat.checkSelfPermission(requireContext(), BLUETOOTH_ADMIN),
-            ContextCompat.checkSelfPermission(requireContext(), BLUETOOTH)
-            -> {
+            ContextCompat.checkSelfPermission(requireContext(), ACCESS_FINE_LOCATION),
+            ContextCompat.checkSelfPermission(requireContext(), BLUETOOTH_ADMIN) -> {
                 getCountry()
             }
             else -> {
-                requestPermissions(arrayOf(ACCESS_FINE_LOCATION, BLUETOOTH_ADMIN, BLUETOOTH), 10)
+                requestPermissions(arrayOf(ACCESS_FINE_LOCATION, BLUETOOTH_ADMIN), LOCATION_REQUEST_CODE)
             }
         }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        if (requestCode == LOCATION_REQUEST_CODE)
-            getCountry()
+        if (requestCode != LOCATION_REQUEST_CODE) return
+        getCountry()
     }
 
     private fun getCountry() {
-
 
         val locationManager: LocationManager
         try {
             locationManager = requireActivity().getSystemService(Context.LOCATION_SERVICE) as LocationManager
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500L, 5f) { location ->
+                GeneralViewUtils.showFirstHideRest(binding.fragmentMainSelfCountryViewGroup, binding.fragmentMainCountryFetchProgressBar)
+                val geoCoder = Geocoder(requireContext(), Locale.getDefault())
+                val addresses = geoCoder.getFromLocation(location.latitude, location.longitude, 1)
+                fetchCountry(addresses[0].countryCode, getYesterdayISODateAsString(), getCurrentISODateAsString()) { resource ->
+                    handleSelfCountryDataFetch(resource)
+                }
+            }
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 500L, 5f) { location ->
                 GeneralViewUtils.showFirstHideRest(binding.fragmentMainSelfCountryViewGroup, binding.fragmentMainCountryFetchProgressBar)
                 val geoCoder = Geocoder(requireContext(), Locale.getDefault())
                 val addresses = geoCoder.getFromLocation(location.latitude, location.longitude, 1)
@@ -187,17 +192,13 @@ class MainFragment : Fragment(), View.OnClickListener {
     }
 
     override fun onClick(view: View?) {
-        val currentYear = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH)
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
-
         when (view?.id) {
             R.id.fragment_main_from_button -> {
-                setSelectedDate(binding.fragmentMainFromDate, true, currentYear, month, day)
+                openDateSelectorDialog(binding.fragmentMainFromDate, true)
             }
 
             R.id.fragment_main_to_button -> {
-                setSelectedDate(binding.fragmentMainToDate, false, currentYear, month, day)
+                openDateSelectorDialog(binding.fragmentMainToDate, false)
             }
             R.id.fragment_main_fetch_country_button -> {
                 binding.fragmentMainFetchedCountryData.text = selfCountryData
@@ -205,23 +206,13 @@ class MainFragment : Fragment(), View.OnClickListener {
         }
     }
 
-    private fun setSelectedDate(textView: TextView, isFromDate: Boolean, currentYear: Int, month: Int, day: Int) {
-        exampleCountriesList.clear()
+    private fun openDateSelectorDialog(textViewToDisplayResult: TextView, isFromDate: Boolean) {
+        val currentYear = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+
         val datePickerDialog = DatePickerDialog(requireContext(), { picker, year, monthOfYear, dayOfMonth ->
-            if (isFromDate) {
-                selectedFromDateAsLong = picker.getDate().time
-                selectedFromDateAsString = getAnyDateAsISODate(year, monthOfYear, dayOfMonth)
-            } else {
-                selectedToDateAsString = getAnyDateAsISODate(year, monthOfYear, dayOfMonth)
-            }
-
-            textView.text = dayOfMonth.toString()
-                .plus(".")
-                .plus(monthOfYear.toString())
-                .plus(".")
-                .plus(year.toString())
-
-            fetchMainRecycler(selectedFromDateAsString, selectedToDateAsString)
+            handleOnDateSet(isFromDate, picker, year, monthOfYear, dayOfMonth, textViewToDisplayResult)
         }, currentYear, month, day)
         if (isFromDate) {
             datePickerDialog.datePicker.maxDate = Date().time - DateUtils.DAY_IN_MILLIS
@@ -231,5 +222,23 @@ class MainFragment : Fragment(), View.OnClickListener {
             datePickerDialog.datePicker.minDate = selectedFromDateAsLong + DateUtils.DAY_IN_MILLIS
         }
         datePickerDialog.show()
+    }
+
+    private fun handleOnDateSet(isFromDate: Boolean, picker: DatePicker, year: Int, monthOfYear: Int, dayOfMonth: Int, textView: TextView) {
+        exampleCountriesList.clear()
+        if (isFromDate) {
+            selectedFromDateAsLong = picker.getDate().time
+            selectedFromDateAsString = getAnyDateAsISODate(year, monthOfYear, dayOfMonth)
+        } else {
+            selectedToDateAsString = getAnyDateAsISODate(year, monthOfYear, dayOfMonth)
+        }
+
+        textView.text = dayOfMonth.toString()
+            .plus(getString(R.string.dot))
+            .plus(monthOfYear.toString())
+            .plus(getString(R.string.dot))
+            .plus(year.toString())
+
+        fetchMainRecycler(selectedFromDateAsString, selectedToDateAsString)
     }
 }
